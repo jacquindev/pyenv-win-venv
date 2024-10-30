@@ -23,10 +23,11 @@
 #>
     
 param (
-    [Switch] $Uninstall = $False
+    [switch]$Uninstall = $False
 )
-    
-$PyEnvWinVenvDir = "${env:USERPROFILE}\.pyenv-win-venv"
+
+$PyEnvWinVenvDir = $(Write-Host "Enter your desired path to pyenv-win-venv directory: "; Read-Host)
+if (($PyEnvWinVenvDir) -like "") { $PyEnvWinVenvDir = "$env:USERPROFILE\.pyenv-win-venv" }
 $BinPath = "${PyEnvWinVenvDir}\bin"
     
 Function Remove-PyEnvVenvVars() {

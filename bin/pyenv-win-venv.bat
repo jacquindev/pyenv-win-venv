@@ -1,2 +1,3 @@
 @ECHO OFF
-powershell -File "%USERPROFILE%\.pyenv-win-venv\bin\pyenv-win-venv.ps1" %*
+set currentdir=%cd%
+powershell -File "%currentdir%\pyenv-venv.ps1" %*
