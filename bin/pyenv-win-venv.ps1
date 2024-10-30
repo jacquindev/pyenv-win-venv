@@ -165,11 +165,11 @@ function Main {
             else {
                 Write-Host "CLI installed using install script"
                 # TODO: Update script for fork version of install-pyenv-win-venv.ps1 script
-                # Write-Host "Downloading & running install-pyenv-win-venv.ps1"
-                # $LastExitCode = 0 # reset the exit code after the git command
-                # # Download and run the installation script
-                # Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/pyenv-win/pyenv-win-venv/main/bin/install-pyenv-win-venv.ps1" -OutFile "$HOME\install-pyenv-win-venv.ps1";
-                # &"$HOME\install-pyenv-win-venv.ps1"
+                Write-Host "Downloading & running install-pyenv-win-venv.ps1"
+                $LastExitCode = 0 # reset the exit code after the git command
+                # Download and run the installation script
+                Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/jacquindev/pyenv-win-venv/refs/heads/main/bin/install-pyenv-win-venv.ps1" -OutFile "$HOME\install-pyenv-win-venv.ps1";
+                &"$HOME\install-pyenv-win-venv.ps1"
             }
         }
     }
