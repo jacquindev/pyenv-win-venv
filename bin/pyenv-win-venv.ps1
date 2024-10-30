@@ -190,6 +190,8 @@ function Main {
         elseif ($subcommand2 -eq "which") { Invoke-HelpWhich; exit }
         else { Write-Warning "Command is not valid! Run `"pyenv-win-venv help`" for the HelpMenu" }
     }
+
+    if (!$subcommand1) { Invoke-HelpMenu; exit }
 }
 
 function Export-LogError {
@@ -352,7 +354,7 @@ which <command>     show the full path to an executable
 help <command>      show the CLI/<command> menu
 
 Flags:
-debug               To show debug log
+log                 To show debug log
 "
 }
 Main
