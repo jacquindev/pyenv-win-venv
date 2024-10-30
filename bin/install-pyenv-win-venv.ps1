@@ -122,14 +122,14 @@ Function Main() {
     else {
         # First installation,
         # Add the \bin path to the User's Environment Variables
-        [System.Environment]::SetEnvironmentVariable('path', $env:USERPROFILE + "\.pyenv-win-venv\bin;" + [System.Environment]::GetEnvironmentVariable('path', "User"), "User")
+        [System.Environment]::SetEnvironmentVariable('path', "$BinPath;" + [System.Environment]::GetEnvironmentVariable('path', "User"), "User")
     }
 
     (New-Item -Path $PyEnvWinVenvDir -ItemType Directory)  *> $null
 
     $DownloadPath = "$PyEnvWinVenvDir\pyenv-win-venv.zip"
 
-    (New-Object System.Net.WebClient).DownloadFile("https://github.com/pyenv-win/pyenv-win-venv/archive/main.zip", $DownloadPath)
+    (New-Object System.Net.WebClient).DownloadFile("https://github.com/jacquindev/pyenv-win-venv/archive/refs/heads/main.zip", $DownloadPath)
     Expand-Archive -Path $DownloadPath -DestinationPath $PyEnvWinVenvDir
     Move-Item -Path "$PyEnvWinVenvDir\pyenv-win-venv-main\*" -Destination "$PyEnvWinVenvDir" -Force
     Remove-Item -Path "$PyEnvWinVenvDir\pyenv-win-venv-main" -Recurse -Force
