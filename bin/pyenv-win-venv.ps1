@@ -80,13 +80,30 @@ function Main {
     }
 
     if ($subcommand1 -eq "activate") {
-        if (!$subcommand2) { Invoke-HelpActivate; exit }
+        if (!$subcommand2) { 
+            $activateFile = $(Get-ChildItem -Recurse -Filter "activate" -ErrorAction SilentlyContinue) 
+            # Activate the virtual environment in current working directory if exists.
+            if ($null -ne $activateFile) {
+                $venvDir = Split-Path $activateFile | Split-Path
+                if ($invokedShell -eq "ps1") {
+                    $Env:PYENV_VENV_ACTIVE = $venvDir
+                    &"$venvDir\Scripts\Activate.ps1"
+                }
+                elseif ($invokedShell -eq "bat") { cmd /k "$venvDir\Scripts\activate.bat" }
+                Export-LogError "Virtualenv: $venvDir activated."
+            }
+            else {
+                # Print help message.
+                $activateFile = $activateFile | Out-Null
+                Invoke-HelpActivate; exit 
+            }
+        }
         elseif (Test-Path -PathType Container "$appEnvDir\$subcommand2") {
             if ($invokedShell -eq "ps1") {
                 $Env:PYENV_VENV_ACTIVE = $subcommand2
                 &"$appEnvDir\$subcommand2\Scripts\Activate.ps1"
             }
-            else { cmd /k "$appEnvDir\$subcommand2\Scripts\activate.bat" }
+            elseif ($invokedShell -eq "bat") { cmd /k "$appEnvDir\$subcommand2\Scripts\activate.bat" }
         }
         else { Write-Warning "Env: $subcommand2 is not installed. Please install by using `"pyenv-venv install <python_version> $subcommand2"`" }
     }
@@ -95,7 +112,7 @@ function Main {
         if ($env:VIRTUAL_ENV) {
             $env:PYENV_VENV_ACTIVE = ""
             if ($invokedShell -eq "ps1") { deactivate }
-            else { cmd /k deactivate }
+            elseif ($invokedShell -eq "bat") { cmd /k deactivate }
         }
         else { Write-Warning "No active virtualenv found to deactivate." }
     }
@@ -125,6 +142,22 @@ function Main {
             }
             else { Write-Warning "Cannot create an env called `"self`" since while uninstalling `pyenv-venv uninstall self` is already a pre-existing command." }
         }
+        elseif ($subcommand2 -eq "cwd") {
+            $cwd = $((Get-Location).Path)
+            if (!(Test-Path -PathType Container "$appEnvDir\$subcommand3")) {
+                $pythonVersion = $(Write-Host "Input the Python version to use for the current directory: " -NoNewline; Read-Host)
+                Write-Host "Installing env:" -NoNewline
+                Write-Host " $subcommand3 " -NoNewline -ForegroundColor "Green"
+                Write-Host "using Python" -NoNewline
+                Write-Host " v$pythonVersion" -ForegroundColor "Yellow"
+
+                if ($env:VIRTUAL_ENV) { $PYENV_VENV_ACTIVE = $Env:PYENV_VENV_ACTIVE; deactivate }
+                pyenv shell $pythonVersion
+                python -m venv "$cwd\$subcommand3"
+                if ($PYENV_VENV_ACTIVE) { pyenv-venv activate $PYENV_VENV_ACTIVE }
+            }
+            else { Write-Warning "`"$subcommand3`" already exists in current directory. Please choose another name for the env." }
+        }
         else { Write-Warning "Python v$subcommand2 is not installed. Install using `"pyenv install $subcommand2"`" }
     }
 
@@ -136,13 +169,19 @@ function Main {
             $choices = '&Yes', '&No'
             $decision = $Host.UI.PromptForChoice($title, $question, $choices, 1)
             if ($decision -eq 0) { Remove-PyEnvWinVenv }
-            elseif (Test-Path -PathType Container "$appEnvDir\$subcommand2") {
-                Write-Host "Uninstalling env:" -NoNewline 
-                Write-Host " $subcommand2 " -NoNewline -ForegroundColor "Yellow"
-                Remove-Item -Recurse -Force "$appEnvDir\$subcommand2"
-            }
-            else { Write-Warning "$subcommand2 is not installed so it cannot be uninstalled." }
         }
+        elseif (Test-Path -PathType Container "$appEnvDir\$subcommand2") {
+            Write-Host "Uninstalling env:" -NoNewline 
+            Write-Host " $subcommand2 " -NoNewline -ForegroundColor "Yellow"
+            Remove-Item -Recurse -Force "$appEnvDir\$subcommand2"
+        }
+        # Remove current python env in current working directory.
+        elseif (Test-Path -PathType Container "$((Get-Location).Path)\$subcommand2") {
+            Write-Host "Uninstalling env:" -NoNewline 
+            Write-Host " $subcommand2 " -NoNewline -ForegroundColor "Yellow"
+            Remove-Item -Recurse -Force "$((Get-Location).Path)\$subcommand2"
+        }
+        else { Write-Warning "$subcommand2 is not installed so it cannot be uninstalled." }
     }
 
     if ($subcommand1 -eq "list") {
@@ -153,26 +192,27 @@ function Main {
 
     if ($subcommand1 -eq "config") { ConfigInfo }
 
-    if ($subcommand1 -eq "update") {
-        if ($subcommand2 -eq "self") {
-            # Check if the CLI was installed using Git
-        (git -C $appDir rev-parse) *> $null
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "CLI installed using Git"
-            (git -C  $appDir fetch origin) *> $null
-                Write-Host "Changelog:" -ForegroundColor Blue
-                git -C $appDir log ..origin/main --pretty=format:"%Cblue* %C(auto)%h: %Cgreen%s%n%b"
-                git -C $appDir pull origin
+    if ($subcommand1 -eq "update" -and $subcommand2 -eq "self") {
+        # Check if the CLI was installed using Git
+        git -C $appDir rev-parse
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "CLI installed using Git." -ForegroundColor "Yellow"
+            git -C $appDir fetch origin | Out-Null
+            $changeLog = $(git -C $appDir log ..origin/main --pretty=format:"%Cblue* %C(auto)%h: %Cgreen%s%n%b")
+            if ($null -ne $changeLog) {
+                Write-Host "Changelog:" -ForegroundColor "Blue"
+                Write-Host "$changeLog"
             }
-            else {
-                Write-Host "CLI installed using install script"
-                # TODO: Update script for fork version of install-pyenv-win-venv.ps1 script
-                Write-Host "Downloading & running install-pyenv-win-venv.ps1"
-                $LastExitCode = 0 # reset the exit code after the git command
-                # Download and run the installation script
-                Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/jacquindev/pyenv-win-venv/refs/heads/main/bin/install-pyenv-win-venv.ps1" -OutFile "$HOME\install-pyenv-win-venv.ps1";
-                &"$HOME\install-pyenv-win-venv.ps1"
-            }
+            Write-Host "$(git -C $appDir pull origin)" -Foreground "Green"
+        }
+        else {
+            Write-Host "CLI installed using install script"
+            # TODO: Update script for fork version of install-pyenv-win-venv.ps1 script
+            Write-Host "Downloading & running install-pyenv-win-venv.ps1"
+            $LastExitCode = 0 # reset the exit code after the git command
+            # Download and run the installation script
+            Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/jacquindev/pyenv-win-venv/refs/heads/main/bin/install-pyenv-win-venv.ps1" -OutFile "$HOME\install-pyenv-win-venv.ps1";
+            &"$HOME\install-pyenv-win-venv.ps1"
         }
     }
 
@@ -254,15 +294,17 @@ function Remove-PyEnvWinVenv() {
 }
 
 function FetchPythonVersions {
+    ''
     Write-Host "Python Versions installed:" -ForegroundColor "Green"
     Write-Host "--------------------------" -ForegroundColor "Green"
     pyenv versions
 }
 
 function FetchEnvs {
+    ''
     Write-Host "Envs installed:" -ForegroundColor "Green"
     Write-Host "---------------" -ForegroundColor "Green"
-    (Get-ChildItem -Directory $app_env_dir | Select-Object -Expand Name)
+    (Get-ChildItem -Directory $appEnvDir | Select-Object -Expand Name)
 }
 
 function ConfigInfo {
@@ -290,7 +332,12 @@ Parameters:
 python_ver    name of the installed python version
 env_name      name of the installed virtualenv
     
-Example: `pyenv-venv install 3.8.5 test_env`
+Example: `
+> pyenv-venv install 3.8.5 test_env 
+=> install virtual env named 'test env' with python version '3.8.5' for all hosts
+
+> pyenv-venv install cwd test_env 
+=> install virtual env named 'test_env' for current directory with specified python version.`
 "
 }
 
