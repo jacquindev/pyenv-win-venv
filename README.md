@@ -3,7 +3,7 @@
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/arzkar)
 
 A CLI to manage virtual envs with pyenv-win<br>
-To report issues for the CLI, open an issue at https://github.com/pyenv-win/pyenv-win-venv/issues
+To report issues for the CLI, open an issue at <https://github.com/pyenv-win/pyenv-win-venv/issues>
 
 # Installation
 
@@ -13,17 +13,20 @@ This script depends on the [pyenv-win](https://github.com/pyenv-win/pyenv-win) s
 
 ## Power Shell
 
-```
-Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/pyenv-win/pyenv-win-venv/main/bin/install-pyenv-win-venv.ps1" -OutFile "$HOME\install-pyenv-win-venv.ps1";
-&"$HOME\install-pyenv-win-venv.ps1"
+```pwsh
+Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/jacquindev/pyenv-win-venv/refs/heads/main/bin/install-pyenv-win-venv.ps1" -OutFile "$HOME\install-pyenv-win-venv.ps1";
+& "$HOME\install-pyenv-win-venv.ps1"
 ```
 
 **Note:** Skip the [Add System Settings](#add-system-settings) Section
 
 ## Git
 
-```
-git clone https://github.com/pyenv-win/pyenv-win-venv "$HOME\.pyenv-win-venv"
+```bash
+git clone https://github.com/jacquindev/pyenv-win-venv.git "$HOME\.pyenv-win-venv"
+
+# Or using SSH
+git clone git@github.com:jacquindev/pyenv-win-venv.git "$HOME\.pyenv-win-venv"
 ```
 
 You need to add the `\bin` path to your environment variables using the following steps.
@@ -48,28 +51,29 @@ Go to `%USERPROFILE%\.pyenv-win-venv` (which is your installed path) and run `gi
 
 ## Power Shell (If the CLI was installed using the PowerScript Installation Script)
 
-```
-Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/pyenv-win/pyenv-win-venv/main/bin/install-pyenv-win-venv.ps1" -OutFile "$HOME\install-pyenv-win-venv.ps1"; &"$HOME\install-pyenv-win-venv.ps1"
+```pwsh
+Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/jacquindev/pyenv-win-venv/refs/heads/main/bin/install-pyenv-win-venv.ps1" -OutFile "$HOME\install-pyenv-win-venv.ps1";
+& "$HOME\install-pyenv-win-venv.ps1"
 ```
 
 # Uninstallation
 
 ## CLI
 
-```
+```cmd
 pyenv-venv uninstall self
 ```
 
-## Power Shell
+## PowerShell
 
-```
-Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/pyenv-win/pyenv-win-venv/main/bin/install-pyenv-win-venv.ps1" -OutFile "$HOME\install-pyenv-win-venv.ps1";
+```pwsh
+Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/jacquindev/pyenv-win-venv/refs/heads/main/bin/install-pyenv-win-venv.ps1" -OutFile "$HOME\install-pyenv-win-venv.ps1";
 &"$HOME\install-pyenv-win-venv.ps1" -Uninstall
 ```
 
 # Usage
 
-```
+```cmd
 > pyenv-win-venv
     pyenv-win-venv v0.6
     Copyright (c) Arbaaz Laskar <arzkar.dev@gmail.com>
@@ -103,67 +107,67 @@ Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/pyenv
 
 - To install an env using Python v3.8.5 (should be already installed in the system using `pyenv install 3.8.5`)
 
-```
+```cmd
 pyenv-venv install 3.8.5 env_name
 ```
 
 - To uninstall an env
 
-```
+```cmd
 pyenv-venv uninstall env_name
 ```
 
 - To activate an env
 
-```
+```cmd
 pyenv-venv activate env_name
 ```
 
 - To deactivate an env
 
-```
+```cmd
 pyenv-venv deactivate
 ```
 
 - To list all installed envs
 
-```
+```cmd
 pyenv-venv list envs
 ```
 
 - To list all installed python versions
 
-```
+```cmd
 pyenv-venv list python
 ```
 
 - To set an env to the `.python-version` file
 
-```
+```cmd
 pyenv-venv local env_name
 ```
 
 - To show the app directory
 
-```
+```cmd
 pyenv-venv config
 ```
 
 - To update the CLI to the latest version
 
-```
+```cmd
 pyenv-venv update self
 ```
 
 - To show the full path to the executable
 
-```
+```cmd
 pyenv-venv which <exec_name>
 ```
 
 - To get help for each command
 
-```
+```cmd
 pyenv-venv help install
 ```
 
@@ -184,7 +188,7 @@ pyenv-venv help install
 
   - First check if you already have a powershell profile.
 
-    ```
+    ```pwsh
     Test-Path $profile
     ```
 
@@ -192,7 +196,7 @@ pyenv-venv help install
 
   - Create a new profile using:
 
-    ```
+    ```pwsh
     New-Item -path $profile -type file –force
     ```
 
@@ -200,7 +204,7 @@ pyenv-venv help install
 
   - Open the `profile.ps1` file and append the following line.
 
-    ```
+    ```cmd
     pyenv-venv init
     ```
 
