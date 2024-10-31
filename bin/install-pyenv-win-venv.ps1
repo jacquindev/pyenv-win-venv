@@ -122,7 +122,7 @@ Function Main() {
     else {
         # First installation,
         # Add the \bin path to the User's Environment Variables
-        [System.Environment]::SetEnvironmentVariable('path', "$BinPath;" + [System.Environment]::GetEnvironmentVariable('path', "User"), "User")
+        [System.Environment]::SetEnvironmentVariable('path', "$PyEnvWinVenvDir\bin;" + [System.Environment]::GetEnvironmentVariable('path', "User"), "User")
     }
 
     (New-Item -Path $PyEnvWinVenvDir -ItemType Directory)  *> $null

@@ -213,7 +213,7 @@ function Export-LogError {
     $timeStamp = (Get-Date).ToString("dd-MM-yyyy HH:mm:ss")
 
     if ($log) { 
-        Write-Output = "$timeStamp  $Message" | Out-File -Path $FilePath -Append
+        Write-Output "$timeStamp  $Message" | Out-File -Path $FilePath -Append
     }
 }
 
