@@ -62,16 +62,29 @@ function Main {
             Export-LogError -m "Checking .python-version file: $cwd\.python-version"
             while ($cwd.length -ne 0) {
                 if (Test-Path "$cwd\.python-version") {
-                    Invoke-PyenvFileVersionActivate "$cwd\.python-version"
+                    Invoke-PyenvFileVersionActivate -PythonFileVersionPath "$cwd\.python-version"
                     exit
                 }
                 else { $cwd = Split-Path $cwd }
             }
         }
+        if ($subcommand2 -eq "cwd") {
+            $cwd = $((Get-Location).Path)
+            $envName = (Get-Content "$cwd\.python-version")
+            Export-LogError -m "Checking .python-version file: $cwd\.python-version"
+            if ((Test-Path "$cwd\.python-version") -and (Test-Path -PathType Container "$cwd\$envName")) {
+                Export-LogError -m "init: env: $envName"
+                Export-LogError -m "Dir: $cwd\$envName exists: $(Test-Path -PathType Container "$cwd\$envName")"
+                if ($invokedShell -eq "ps1") { &"$cwd\$envName\Scripts\Activate.ps1" }
+                else { cmd /k "$cwd\$envName\Scripts\activate.bat" }
+                exit 
+            }
+            else { Write-Warning "env: $envName not found in current working directory!" }
+        }
         else {
             Export-LogError -m "Checking .python-version file: $pythonVersionFile"
             if (Test-Path $pythonVersionFile) {
-                Invoke-PyenvFileVersionActivate "$pythonVersionFile"
+                Invoke-PyenvFileVersionActivate -PythonFileVersionPath "$pythonVersionFile"
             }
             else {
                 Write-Warning "$pythonVersionFile not found!"
@@ -142,19 +155,24 @@ function Main {
             }
             else { Write-Warning "Cannot create an env called `"self`" since while uninstalling `pyenv-venv uninstall self` is already a pre-existing command." }
         }
-        elseif ($subcommand2 -eq "cwd") {
+        elseif ($subcommand2 -eq "cwd" -and $subcommand3 -ne "self") {
             $cwd = $((Get-Location).Path)
-            if (!(Test-Path -PathType Container "$appEnvDir\$subcommand3")) {
+            if (!(Test-Path -PathType Container "$cwd\$subcommand3")) {
                 $pythonVersion = $(Write-Host "Input the Python version to use for the current directory: " -NoNewline; Read-Host)
-                Write-Host "Installing env:" -NoNewline
-                Write-Host " $subcommand3 " -NoNewline -ForegroundColor "Green"
-                Write-Host "using Python" -NoNewline
-                Write-Host " v$pythonVersion" -ForegroundColor "Yellow"
+                if (Test-Path -PathType Container "$pyenvVersionsDir\$pythonVersion") {
+                    Write-Host "Installing env:" -NoNewline
+                    Write-Host " $subcommand3 " -NoNewline -ForegroundColor "Green"
+                    Write-Host "using Python" -NoNewline
+                    Write-Host " v$pythonVersion" -ForegroundColor "Yellow"
 
-                if ($env:VIRTUAL_ENV) { $PYENV_VENV_ACTIVE = $Env:PYENV_VENV_ACTIVE; deactivate }
-                pyenv shell $pythonVersion
-                python -m venv "$cwd\$subcommand3"
-                if ($PYENV_VENV_ACTIVE) { pyenv-venv activate $PYENV_VENV_ACTIVE }
+                    if ($env:VIRTUAL_ENV) { $PYENV_VENV_ACTIVE = $Env:PYENV_VENV_ACTIVE; deactivate }
+                    pyenv shell $pythonVersion
+                    python -m venv "$cwd\$subcommand3"
+                    if ($PYENV_VENV_ACTIVE) { pyenv-venv activate $PYENV_VENV_ACTIVE }
+                }
+                else {
+                    Write-Warning "Python v$pythonVersion is not installed. Please install it first by using `"pyenv install <python_version>"`"
+                }
             }
             else { Write-Warning "`"$subcommand3`" already exists in current directory. Please choose another name for the env." }
         }
@@ -370,6 +388,7 @@ Search for .python-version file in the
 current directory and activate the env
 
 Commands:
+cwd     search for .python-version file and activate the env of current working directory 
 root    search for .python-version file by traversing from
 the current working directory to the root
     
