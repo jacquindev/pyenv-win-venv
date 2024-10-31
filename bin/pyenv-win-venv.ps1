@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[CmdletBinding()]
 param (
     [Parameter(Mandatory = $False)]
     [ValidateSet('init', 'activate', 'deactivate', 'install', 'uninstall', 'list', 'config', 'local', 'config', 'update', 'which', 'help')]
@@ -40,8 +39,7 @@ while (-not (Test-Path -LiteralPath $appDir)) {
 $appEnvDir = "$appDir\envs"
 $cliVersion = Get-Content "$appDir\.version"
 $pyenvVersionsDir = "$Env:PYENV_ROOT\versions"
-$cwd = $((Get-Location).Path)
-$pythonVersionFile = "$cwd\.python-version"
+$pythonVersionFile = "$((Get-Location).Path)\.python-version"
 
 function Main {
     # Initialize the app directories
@@ -58,31 +56,37 @@ function Main {
     Export-LogError -m "Current Python Version File: $pythonVersionFile"
 
     if ($subcommand1 -eq "init") {
-        Export-LogError "Checking .python-version file: $pythonVersionFile"
-        if (Test-Path $pythonVersionFile) {
-            $envName = (Get-Content $pythonVersionFile)
-            Export-LogError -m "init: env: $envName"
-            Export-LogError -m "Dir: $appEnvDir\$envName exists: $(Test-Path -PathType Container $appEnvDir\$envName)"
-            if ($envName -and (Test-Path -PathType Container "$appEnvDir\$envName")) {
-                if ($invokeShell -eq "ps1") { & "$appEnvDir\$envName\Scripts\Activate.ps1" }
-                else { cmd /k "$appEnvDir\$envName\Scripts\activate.bat" }
+        # TODO:
+        if ($subcommand2 -eq "root") {
+            $cwd = $((Get-Location).Path)
+            Export-LogError -m "Checking .python-version file: $cwd\.python-version"
+            while ($cwd.length -ne 0) {
+                if (Test-Path "$cwd\.python-version") {
+                    Invoke-PyenvFileVersionActivate "$cwd\.python-version"
+                    exit
+                }
+                else { $cwd = Split-Path $cwd }
             }
         }
         else {
-            Write-Error "$pythonVersionFile not found!"
+            Export-LogError -m "Checking .python-version file: $pythonVersionFile"
+            if (Test-Path $pythonVersionFile) {
+                Invoke-PyenvFileVersionActivate "$pythonVersionFile"
+            }
+            else {
+                Write-Warning "$pythonVersionFile not found!"
+            }
         }
     }
 
     if ($subcommand1 -eq "activate") {
         if (!$subcommand2) { Invoke-HelpActivate; exit }
-        if (Test-Path -PathType Container "$appEnvDir\$subcommand2") {
+        elseif (Test-Path -PathType Container "$appEnvDir\$subcommand2") {
             if ($invokedShell -eq "ps1") {
                 $Env:PYENV_VENV_ACTIVE = $subcommand2
-                & "$appEnvDir\$subcommand2\Scripts\Activate.ps1"
+                &"$appEnvDir\$subcommand2\Scripts\Activate.ps1"
             }
-            else {
-                cmd /k "$appEnvDir\$subcommand2\Scripts\activate.bat"
-            }
+            else { cmd /k "$appEnvDir\$subcommand2\Scripts\activate.bat" }
         }
         else { Write-Warning "Env: $subcommand2 is not installed. Please install by using `"pyenv-venv install <python_version> $subcommand2"`" }
     }
@@ -109,8 +113,8 @@ function Main {
                         $PYENV_VENV_ACTIVE = $Env:PYENV_VENV_ACTIVE
                         deactivate
                     }
-                    & pyenv shell $subcommand2
-                    & python -m venv "$appEnvDir\$subcommand3"
+                    pyenv shell $subcommand2
+                    python -m venv "$appEnvDir\$subcommand3"
 
                     # Reactivate the python env if any
                     if ($PYENV_VENV_ACTIVE) {
@@ -212,6 +216,17 @@ function Export-LogError {
 
     if ($log) { 
         Write-Output "$timeStamp  $Message" | Out-File -Path $FilePath -Append
+    }
+}
+
+function Invoke-PyenvFileVersionActivate {
+    param ([string]$PythonFileVersionPath)
+    $envName = (Get-Content $PythonFileVersionPath)
+    Export-LogError -m "init: env: $envName"
+    Export-LogError -m "Dir: $appEnvDir\$envName exists: $(Test-Path -PathType Container "$appEnvDir\$envName")"
+    if ($envName -and (Test-Path -PathType Container "$appEnvDir\$envName")) {
+        if ($invokedShell -eq "ps1") { &"$appEnvDir\$envName\Scripts\Activate.ps1" }
+        else { cmd /k "$appEnvDir\$envName\Scripts\activate.bat" }
     }
 }
 
