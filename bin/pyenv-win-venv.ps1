@@ -35,8 +35,6 @@ else {
 
 $appDir = "$env:USERPROFILE\.pyenv-win-venv"
 while (-not (Test-Path -LiteralPath $appDir)) {
-    Set-Location $PSScriptRoot
-    [System.Environment]::CurrentDirectory = $PSScriptRoot
     $appDir = (Resolve-Path -Path $PSScriptRoot).ProviderPath | Split-Path
 }
 $appEnvDir = "$appDir\envs"
